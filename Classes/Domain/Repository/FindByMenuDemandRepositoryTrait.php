@@ -8,25 +8,39 @@ use TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use UBOS\MenuControls\Dto\MenuDemand;
 
+/**
+ * Provides common repository functionality for finding records based on MenuDemand objects.
+ * Can be implemented by any repository that needs to support menu filtering capabilities.
+ */
 trait FindByMenuDemandRepositoryTrait
 {
 	abstract public function createQuery();
 
+	/**
+	 * Maps database rows to domain objects
+	 */
 	public function map(array $rows): array
 	{
 		return GeneralUtility::makeInstance(DataMapper::class)->map($this->objectType, $rows);
 	}
 
 	/**
-	 * @param QueryInterface $query
-	 * @param MenuDemand $demand
-	 * @return ConstraintInterface[]
+	 * Hook method to add custom constraints based on the demand object.
+	 * Implementing repositories can override this to add their own constraints.
 	 */
 	protected function getAdditionalMenuDemandConstraints(QueryInterface $query, MenuDemand $demand): array
 	{
 		return [];
 	}
 
+	/**
+	 * Finds records based on a MenuDemand configuration.
+	 * Handles pagination, categories, ordering and record selection.
+	 *
+	 * @param MenuDemand $demand The demand object containing search criteria
+	 * @param bool $returnRawQueryResult Whether to return raw query results instead of domain objects
+	 * @return array The matched records
+	 */
 	public function findByMenuDemand(MenuDemand $demand, bool $returnRawQueryResult = false): array
 	{
 		$query = $this->createQuery();
@@ -100,13 +114,12 @@ trait FindByMenuDemandRepositoryTrait
 	}
 
 	/**
-	 * Returns a category constraint created by
-	 * a given list of categories and a junction string
+	 * Creates a category constraint for the query based on provided categories.
+	 * Supports different logical conjunctions: OR, AND, NOT OR, NOT AND.
 	 *
-	 * @param QueryInterface $query
-	 * @param string|array $categories
-	 * @param string $conjunction
-	 * @return ConstraintInterface|null
+	 * @param QueryInterface $query The query to enhance
+	 * @param string|array $categories Category UIDs as string (comma-separated) or array
+	 * @param string $conjunction How to combine the category constraints (or, and, notor, notand)
 	 */
 	protected function createCategoryConstraint(
 		QueryInterface $query,

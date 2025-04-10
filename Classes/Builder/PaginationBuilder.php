@@ -12,17 +12,23 @@ use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
 use UBOS\MenuControls\Dto\Pagination;
 use UBOS\MenuControls\Dto\PaginationItem;
 
+/**
+ * Builder for pagination objects that can be used in templates.
+ * Supports different pagination variants like standard pagination,
+ * load-more buttons and infinite scrolling.
+ */
 class PaginationBuilder
 {
-	protected array $settings = [
-		'pageArgumentKey' => 'page',
-		'pluginContentRecordUidArgumentKey' => '',
-		'itemsPerPage' => 12,
-		'maximumLinks' => 3,
-		'variant' => ''
-	];
 	protected ?SlidingWindowPagination $slidingWindowPagination = null;
 
+	/**
+	 * @param array $records The records to paginate
+	 * @param Request $request The current request
+	 * @param UriBuilder $uriBuilder The controller URI builder
+	 * @param string $menuActionName The controller action name for the menu
+	 * @param int $pluginContentRecordUid Content element UID for fragment links
+	 * @param int $pluginFragmentPageType Page type for fragment requests
+	 */
 	public function __construct(
 		protected array      $records,
 		protected Request    $request,
@@ -34,13 +40,41 @@ class PaginationBuilder
 	{
 	}
 
+	/**
+	 * Configures the pagination builder with custom settings.
+	 * Uses fluent interface pattern to allow method chaining.
+	 *
+	 * Available settings:
+	 * - pageArgumentKey: Request argument name for the page number
+	 * - pluginContentRecordUidArgumentKey: Request argument name for plugin content element UID
+	 *   (useful for controller fragment requests where the plugin content element UID is needed)
+	 * - itemsPerPage: Number of items to display per page
+	 * - maximumLinks: Maximum number of page links to show in pagination
+	 * - variant: Pagination style ('', 'load-more', or 'infinite-scroll')
+	 *   - Empty string: Standard numbered pagination
+	 *   - 'load-more': Defines a "load more" pagination item
+	 *   - 'infinite-scroll': Defines a "load more" pagination item with trigger "intersect"
+	 *
+	 * @param array $settings Custom settings to override defaults
+	 */
 	public function configure(array $settings): self
 	{
 		$this->settings = array_merge($this->settings, $settings);
 		$this->slidingWindowPagination = null;
 		return $this;
 	}
+	protected array $settings = [
+		'pageArgumentKey' => 'page',
+		'pluginContentRecordUidArgumentKey' => '',
+		'itemsPerPage' => 12,
+		'maximumLinks' => 3,
+		'variant' => ''
+	];
 
+	/**
+	 * Builds a Pagination object based on the current configuration.
+	 * Returns different pagination structures based on the selected variant.
+	 */
 	public function build(): Pagination
 	{
 		$loadMoreArgs = $this->request->getArguments();
@@ -75,11 +109,17 @@ class PaginationBuilder
 		};
 	}
 
+	/**
+	 * Returns the paginated items for the current page
+	 */
 	public function getPaginatedItems(): array
 	{
 		return $this->getSlidingWindowPagination()->getPaginator()->getPaginatedItems();
 	}
 
+	/**
+	 * Adds prev/next links to the HTML head for SEO optimization
+	 */
 	public function addPaginationLinksToHead(): self
 	{
 		$arguments = $this->request->getArguments();
@@ -95,6 +135,9 @@ class PaginationBuilder
 		return $this;
 	}
 
+	/**
+	 * Gets or creates the SlidingWindowPagination instance
+	 */
 	public function getSlidingWindowPagination(): SlidingWindowPagination
 	{
 		if (!$this->slidingWindowPagination) {
@@ -108,6 +151,12 @@ class PaginationBuilder
 		return $this->slidingWindowPagination;
 	}
 
+	/**
+	 * Builds a pagination item for a specific page
+	 *
+	 * @param int|null $page Page number
+	 * @param string $label Custom label (uses page number if empty)
+	 */
 	protected function buildItem(?int $page, string $label = ''): ?PaginationItem
 	{
 		if (!$page) {
@@ -129,6 +178,12 @@ class PaginationBuilder
 		);
 	}
 
+	/**
+	 * Builds a URI for pagination links
+	 *
+	 * @param array $arguments Request arguments for the URI
+	 * @param bool $isFragmentUri Whether to build a fragment URI for AJAX requests
+	 */
 	protected function buildUri(array $arguments, bool $isFragmentUri = false): string
 	{
 		if ($isFragmentUri && $this->settings['pluginContentRecordUidArgumentKey'] && $this->pluginContentRecordUid) {
