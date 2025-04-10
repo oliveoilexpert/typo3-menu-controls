@@ -38,7 +38,7 @@ trait FindByMenuDemandRepositoryTrait
 	 * Handles pagination, categories, ordering and record selection.
 	 *
 	 * @param MenuDemand $demand The demand object containing search criteria
-	 * @param bool $returnRawQueryResult Whether to return raw query results instead of domain objects
+	 * @param bool $returnRawQueryResult Whether to return raw query results instead of domain objects (default: false)
 	 * @return array The matched records
 	 */
 	public function findByMenuDemand(MenuDemand $demand, bool $returnRawQueryResult = false): array

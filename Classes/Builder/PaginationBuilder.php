@@ -19,15 +19,13 @@ use UBOS\MenuControls\Dto\PaginationItem;
  */
 class PaginationBuilder
 {
-	protected ?SlidingWindowPagination $slidingWindowPagination = null;
-
 	/**
 	 * @param array $records The records to paginate
 	 * @param Request $request The current request
 	 * @param UriBuilder $uriBuilder The controller URI builder
 	 * @param string $menuActionName The controller action name for the menu
-	 * @param int $pluginContentRecordUid Content element UID for fragment links
-	 * @param int $pluginFragmentPageType Page type for fragment requests
+	 * @param int $pluginContentRecordUid Content element UID for fragment links (optional)
+	 * @param int $pluginFragmentPageType Page type for fragment requests (optional)
 	 */
 	public function __construct(
 		protected array      $records,
@@ -40,6 +38,20 @@ class PaginationBuilder
 	{
 	}
 
+	protected ?SlidingWindowPagination $slidingWindowPagination = null;
+
+	/**
+	 * Default settings for the pagination builder.
+	 * @see configure() method for detailed explanation of each setting.
+	 */
+	protected array $settings = [
+		'pageArgumentKey' => 'page',
+		'pluginContentRecordUidArgumentKey' => '',
+		'itemsPerPage' => 12,
+		'maximumLinks' => 3,
+		'variant' => ''
+	];
+
 	/**
 	 * Configures the pagination builder with custom settings.
 	 * Uses fluent interface pattern to allow method chaining.
@@ -48,8 +60,8 @@ class PaginationBuilder
 	 * - pageArgumentKey: Request argument name for the page number
 	 * - pluginContentRecordUidArgumentKey: Request argument name for plugin content element UID
 	 *   (useful for controller fragment requests where the plugin content element UID is needed)
-	 * - itemsPerPage: Number of items to display per page
-	 * - maximumLinks: Maximum number of page links to show in pagination
+	 * - itemsPerPage: Number of items to display per page (default: 12)
+	 * - maximumLinks: Maximum number of page links to show in pagination window (default: 3)
 	 * - variant: Pagination style ('', 'load-more', or 'infinite-scroll')
 	 *   - Empty string: Standard numbered pagination
 	 *   - 'load-more': Defines a "load more" pagination item
@@ -63,13 +75,6 @@ class PaginationBuilder
 		$this->slidingWindowPagination = null;
 		return $this;
 	}
-	protected array $settings = [
-		'pageArgumentKey' => 'page',
-		'pluginContentRecordUidArgumentKey' => '',
-		'itemsPerPage' => 12,
-		'maximumLinks' => 3,
-		'variant' => ''
-	];
 
 	/**
 	 * Builds a Pagination object based on the current configuration.
@@ -182,7 +187,7 @@ class PaginationBuilder
 	 * Builds a URI for pagination links
 	 *
 	 * @param array $arguments Request arguments for the URI
-	 * @param bool $isFragmentUri Whether to build a fragment URI for AJAX requests
+	 * @param bool $isFragmentUri Whether to build a fragment URI for AJAX requests (default: false)
 	 */
 	protected function buildUri(array $arguments, bool $isFragmentUri = false): string
 	{

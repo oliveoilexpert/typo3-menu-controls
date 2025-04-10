@@ -12,14 +12,14 @@ class MenuDemand
 	/**
 	 * @param string $parents Comma-separated list of parent page UIDs
 	 * @param string $records Comma-separated list of record UIDs
-	 * @param int|null $limit Maximum number of records to return
-	 * @param int $offset Number of records to skip
+	 * @param int|null $limit Maximum number of records to return (default is null for no limit)
+	 * @param int $offset Number of records to skip (default: 0)
 	 * @param array<string, array{uids: string, conjunction: string}> $categories Category filter configuration
-	 * @param string $categoriesConjunction How to combine category groups (and, or, notor, notand)
-	 * @param string $orderField Field to sort by
-	 * @param string $orderDirection Sort direction (asc, desc)
-	 * @param bool $orderByRecordsProperty Whether to maintain the order from the records parameter
-	 * @param array $additionalSettings Additional custom settings for specialized implementations
+	 * @param string $categoriesConjunction How to combine category groups (and, or, notor, notand) (default: 'and')
+	 * @param string $orderField Field to sort by (default: 'sorting')
+	 * @param string $orderDirection Sort direction (asc, desc) (default: 'asc')
+	 * @param bool $orderByRecordsProperty Whether to maintain the order from the records parameter (default: false)
+	 * @param array $additionalSettings Additional custom settings for specialized implementations (optional)
 	 */
 	public function __construct(
 		public string $parents = '',
@@ -40,7 +40,7 @@ class MenuDemand
 	 * Factory method to create a MenuDemand from an array
 	 *
 	 * @param array $demand Raw demand data
-	 * @param array $additionalSettings Additional settings to merge
+	 * @param array $additionalSettings Additional settings to merge (optional)
 	 */
 	public static function createFromArray(array $demand, array $additionalSettings = []): MenuDemand
 	{
