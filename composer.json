@@ -1,0 +1,26 @@
+{
+	"name": "ubos/typo3-menu-controls",
+	"type": "typo3-cms-extension",
+	"description": "",
+	"license": "MIT",
+	"version": "1.0.0",
+	"require": {
+		"php": "^8.2",
+		"typo3/cms-core": "~13.4.0",
+		"typo3/cms-extbase": "~13.4.0",
+		"typo3/cms-install": "~13.4.0"
+	},
+	"replace": {
+		"typo3-ter/typo3-menu-controls": "self.version"
+	},
+	"autoload": {
+		"psr-4": {
+			"UBOS\\MenuControls\\": "Classes/"
+		}
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "menu_controls"
+		}
+	}
+}
