@@ -1,7 +1,8 @@
 <?php
 
-namespace UBOS\MenuControls;
+namespace UBOS\MenuControls\Builder;
 
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Pagination\ArrayPaginator;

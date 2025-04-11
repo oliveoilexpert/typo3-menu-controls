@@ -40,9 +40,8 @@ class MenuDemand
 	 * Factory method to create a MenuDemand from an array
 	 *
 	 * @param array $demand Raw demand data
-	 * @param array $additionalSettings Additional settings to merge (optional)
 	 */
-	public static function createFromArray(array $demand, array $additionalSettings = []): MenuDemand
+	public static function createFromArray(array $demand): MenuDemand
 	{
 		return new MenuDemand(
 			$demand['parents'] ?? '',
@@ -54,7 +53,7 @@ class MenuDemand
 			$demand['orderField'] ?? 'sorting',
 			$demand['orderDirection'] ?? 'asc',
 			(bool)($demand['orderByRecordsProperty'] ?? false),
-			$additionalSettings
+			$demand['additionalSettings'] ?? []
 		);
 	}
 }

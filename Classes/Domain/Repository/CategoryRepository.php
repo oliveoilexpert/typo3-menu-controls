@@ -2,6 +2,7 @@
 
 namespace UBOS\MenuControls\Domain\Repository;
 
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\Generic\Typo3QuerySettings;
@@ -12,12 +13,15 @@ use TYPO3\CMS\Core\Context\Context;
  * Repository for 'sys_category' records.
  * Provides methods to find categories by UID lists and parent relations.
  */
+#[Autoconfigure(public: true)]
 class CategoryRepository extends Repository
 {
 	/**
 	 * Default ordering for category queries
+	 *
+	 * @var array
 	 */
-	protected array $defaultOrderings = [
+	protected $defaultOrderings = [
 		'sorting' => \TYPO3\CMS\Extbase\Persistence\QueryInterface::ORDER_ASCENDING
 	];
 
@@ -39,12 +43,12 @@ class CategoryRepository extends Repository
 	 *
 	 * @param string $uids Comma-separated list of category UIDs
 	 * @param bool $returnRawQueryResult Whether to return raw query results (default: false)
-	 * @return QueryResult|null The matched categories or null if no UIDs provided
+	 * @return array|QueryResult The matched categories or null if no UIDs provided
 	 */
-	public function findByUidList(string $uids, bool $returnRawQueryResult = false): ?QueryResult
+	public function findByUidList(string $uids, bool $returnRawQueryResult = false): array|QueryResult
 	{
 		if (!$uids) {
-			return null;
+			return [];
 		}
 		$query = $this->createQuery();
 		return $query
@@ -65,9 +69,9 @@ class CategoryRepository extends Repository
 	 *
 	 * @param int $parentUid UID of the parent category
 	 * @param bool $returnRawQueryResult Whether to return raw query results (default: false)
-	 * @return QueryResult|null The matched child categories
+	 * @return array|QueryResult The matched child categories
 	 */
-	public function findByParent(int $parentUid, bool $returnRawQueryResult = false): ?QueryResult
+	public function findByParent(int $parentUid, bool $returnRawQueryResult = false): array|QueryResult
 	{
 		$query = $this->createQuery();
 		return $query

@@ -1,7 +1,8 @@
 <?php
 
-namespace UBOS\MenuControls;
+namespace UBOS\MenuControls\Builder;
 
+use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Request;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
@@ -9,6 +10,7 @@ use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Core\PageTitle\PageTitleProviderInterface;
 
 use UBOS\MenuControls\Domain\Repository\CategoryRepository;
+use UBOS\MenuControls\Domain\Repository\MenuDemandRepositoryInterface;
 use UBOS\MenuControls\Dto\MenuDemand;
 use UBOS\MenuControls\Dto\CategoryFilter;
 use UBOS\MenuControls\Dto\CategoryFilterItem;
@@ -22,7 +24,6 @@ class CategoryFilterBuilder
 	/**
 	 * @param Request $request The current request
 	 * @param UriBuilder $uriBuilder The controller URI builder
-	 * @param CategoryRepository $categoryRepository Repository for sys_category records
 	 * @param string $menuActionName The controller action name for the menu
 	 * @param MenuDemandRepositoryInterface|null $menuRepository Repository for checking potential results (optional)
 	 * @param MenuDemand|null $menuDemand Demand object for checking potential results (optional)
@@ -32,7 +33,6 @@ class CategoryFilterBuilder
 	public function __construct(
 		protected Request                        $request,
 		protected UriBuilder                     $uriBuilder,
-		protected CategoryRepository             $categoryRepository,
 		protected string                         $menuActionName,
 		protected ?MenuDemandRepositoryInterface $menuRepository = null,
 		protected ?MenuDemand                    $menuDemand = null,
@@ -40,7 +40,10 @@ class CategoryFilterBuilder
 		protected int                            $pluginFragmentPageType = 0,
 	)
 	{
+		$this->categoryRepository = GeneralUtility::makeInstance(CategoryRepository::class);
 	}
+
+	protected CategoryRepository $categoryRepository;
 
 	protected string $activeCategories = '';
 
@@ -149,14 +152,14 @@ class CategoryFilterBuilder
 		$this->categoryRepository->setDefaultOrderings($this->settings['categoryOrder']);
 
 		if ($this->settings['categories']) {
-			$categories = $this->categoryRepository->findByUidList($this->settings['categories'], true)->toArray();
+			$categories = $this->categoryRepository->findByUidList($this->settings['categories'], true);
 			foreach ($categories as $category) {
 				$filter->items[] = $this->buildFilterItem($category);
 			}
 		}
 
 		if ($this->settings['treeCategories']) {
-			$treeCategories = $this->categoryRepository->findByUidList($this->settings['treeCategories'], true)->toArray();
+			$treeCategories = $this->categoryRepository->findByUidList($this->settings['treeCategories'], true);
 			foreach ($treeCategories as $category) {
 				$filter->items[] = $this->buildTree(
 					$category,
@@ -188,11 +191,7 @@ class CategoryFilterBuilder
 		if (!method_exists($titleProvider, 'setTitle')) {
 			return $this;
 		}
-		$query = $this->categoryRepository->createQuery();
-		$query->getQuerySettings()->setRespectStoragePage(false);
-		$categories = $query
-			->matching($query->in('uid', explode(',', $this->activeCategories)))
-			->execute()->toArray();
+		$categories = $this->categoryRepository->findByUidList($this->activeCategories, true);
 		$pageTitleSuffixCategory =
 			$divider .
 			implode(', ', array_map(function (array $category) {
@@ -238,7 +237,7 @@ class CategoryFilterBuilder
 		}
 
 		$activeChildren = [];
-		$subCategories = $this->categoryRepository->findByParent($category['uid'], true)->toArray();
+		$subCategories = $this->categoryRepository->findByParent($category['uid'], true);
 		foreach ($subCategories as $subCategory) {
 			if (GeneralUtility::inList($this->activeCategories, (string)$subCategory['uid'])) {
 				$activeChildren[] = $subCategory['uid'];
