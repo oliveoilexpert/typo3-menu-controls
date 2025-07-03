@@ -18,6 +18,7 @@ class CategoryFilterItem
 	 * @param bool $disabled Whether this item is disabled (default: false)
 	 * @param bool $hasNoPotential Whether selecting this item would yield no results (default: false)
 	 * @param array $activeChildren UIDs of active child categories (default: [])
+	 * @param string $header Optional header text for the item (default: '')
 	 */
 	public function __construct(
 		public string              $label,
@@ -29,6 +30,7 @@ class CategoryFilterItem
 		public bool                $disabled = false,
 		public bool                $hasNoPotential = false,
 		public array               $activeChildren = [],
+		public string              $header = '',
 	)
 	{
 	}
