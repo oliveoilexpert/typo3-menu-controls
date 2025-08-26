@@ -3,6 +3,7 @@
 namespace UBOS\MenuControls\Builder;
 
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
+use TYPO3\CMS\Core\Utility\DebugUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Request;
 use TYPO3\CMS\Extbase\Mvc\Web\Routing\UriBuilder;
@@ -253,10 +254,11 @@ class CategoryFilterBuilder
 			$enabledParent
 		);
 
+		$buildTree--;
 		foreach ($subCategories as $subCategory) {
 			$item->children[] = $this->buildTree(
 				$subCategory,
-				$buildTree--,
+				$buildTree,
 				$this->getTreeIteratorAdvancement($disabledTree),
 				$this->getTreeIteratorAdvancement($multiSelectTree),
 				$activeChildren,
@@ -310,6 +312,7 @@ class CategoryFilterBuilder
 		}
 
 		if ($disabled) {
+
 			return new CategoryFilterItem(
 				label: $this->getCategoryTitle($category),
 				closeItem: $closeItem ?? null,
@@ -341,7 +344,7 @@ class CategoryFilterBuilder
 		}
 
 		if ($this->settings['checkPotential'] && $this->menuRepository && $this->menuDemand) {
-			$potentialDemand = $this->menuDemand;
+			$potentialDemand = clone $this->menuDemand;
 			$potentialDemand->categories[$this->settings['demandCategoriesKey']]['uids'] = $newList;
 			$potentialDemand->limit = 1;
 			$hasNoPotential = !$this->menuRepository->findByMenuDemand($potentialDemand, returnRawQueryResult: true);
@@ -396,14 +399,11 @@ class CategoryFilterBuilder
 	protected function getTreeIteratorAdvancement(int $level): int
 	{
 		if ($level > 1) {
-			$level--;
-		} else if ($level == 1) {
-			$level -= 2;
-		} else if ($level < -1) {
-			$level++;
-		} else if ($level == -1) {
-			$level += 2;
+			return $level - 1;
 		}
-		return $level;
+		if ($level < 0) {
+			return $level + 1;
+		}
+		return 0;
 	}
 }
