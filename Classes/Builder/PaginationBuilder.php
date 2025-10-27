@@ -27,6 +27,7 @@ class PaginationBuilder
 	 * @param string $menuActionName The controller action name for the menu
 	 * @param int $pluginContentRecordUid Content element UID for fragment links (optional)
 	 * @param int $pluginFragmentPageType Page type for fragment requests (optional)
+	 * @param null|Closure(array):string $fragmentUrlBuilder Custom URL builder for fragment URLs (optional)
 	 */
 	public function __construct(
 		protected array      $records,
@@ -35,6 +36,7 @@ class PaginationBuilder
 		protected string     $menuActionName,
 		protected int        $pluginContentRecordUid = 0,
 		protected int        $pluginFragmentPageType = 0,
+		protected ?\Closure  $fragmentUrlBuilder = null
 	)
 	{
 	}
@@ -47,7 +49,6 @@ class PaginationBuilder
 	 */
 	protected array $settings = [
 		'pageArgumentKey' => 'page',
-		'pluginContentRecordUidArgumentKey' => '',
 		'itemsPerPage' => 12,
 		'maximumLinks' => 3,
 		'variant' => ''
@@ -59,8 +60,6 @@ class PaginationBuilder
 	 *
 	 * Available settings:
 	 * - pageArgumentKey: Request argument name for the page number
-	 * - pluginContentRecordUidArgumentKey: Request argument name for plugin content element UID
-	 *   (useful for controller fragment requests where the plugin content element UID is needed)
 	 * - itemsPerPage: Number of items to display per page (default: 12)
 	 * - maximumLinks: Maximum number of page links to show in pagination window (default: 3)
 	 * - variant: Pagination style ('', 'load-more', or 'infinite-scroll')
@@ -192,6 +191,9 @@ class PaginationBuilder
 	 */
 	protected function buildUri(array $arguments, bool $isFragmentUri = false): string
 	{
+		if ($isFragmentUri && $this->fragmentUrlBuilder) {
+			return ($this->fragmentUrlBuilder)($arguments);
+		}
 		if ($isFragmentUri && $this->settings['pluginContentRecordUidArgumentKey'] && $this->pluginContentRecordUid) {
 			$arguments[$this->settings['pluginContentRecordUidArgumentKey']] = $this->pluginContentRecordUid;
 		}

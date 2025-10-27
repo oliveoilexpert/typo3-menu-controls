@@ -19,6 +19,7 @@ class CategoryFilterItem
 	 * @param bool $hasNoPotential Whether selecting this item would yield no results (default: false)
 	 * @param array $activeChildren UIDs of active child categories (default: [])
 	 * @param string $header Optional header text for the item (default: '')
+	 * @param CategoryFilterItem|null $exclusiveItem Item if it was exclusive (default: null)
 	 */
 	public function __construct(
 		public string              $label,
@@ -31,6 +32,7 @@ class CategoryFilterItem
 		public bool                $hasNoPotential = false,
 		public array               $activeChildren = [],
 		public string              $header = '',
+		public ?CategoryFilterItem $exclusiveItem = null,
 	)
 	{
 	}

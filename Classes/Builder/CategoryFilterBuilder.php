@@ -30,6 +30,7 @@ class CategoryFilterBuilder
 	 * @param MenuDemand|null $menuDemand Demand object for checking potential results (optional)
 	 * @param int $pluginContentRecordUid Content element UID for fragment links (default: 0)
 	 * @param int $pluginFragmentPageType Page type for fragment requests (default: 0)
+	 * @param null|Closure(array):string $fragmentUrlBuilder Custom URL builder for fragment URLs (optional)
 	 */
 	public function __construct(
 		protected Request                        $request,
@@ -39,6 +40,7 @@ class CategoryFilterBuilder
 		protected ?MenuDemand                    $menuDemand = null,
 		protected int                            $pluginContentRecordUid = 0,
 		protected int                            $pluginFragmentPageType = 0,
+		protected ?\Closure						 $fragmentUrlBuilder = null
 	)
 	{
 		$this->categoryRepository = GeneralUtility::makeInstance(CategoryRepository::class);
@@ -85,7 +87,6 @@ class CategoryFilterBuilder
 
 	/**
 	 * Configures the filter builder with custom settings.
-	 * Uses fluent interface pattern to allow method chaining.
 	 *
 	 * Available settings:
 	 * - active: Whether to build the filter at all (default: true)
@@ -312,7 +313,6 @@ class CategoryFilterBuilder
 		}
 
 		if ($disabled) {
-
 			return new CategoryFilterItem(
 				label: $this->getCategoryTitle($category),
 				closeItem: $closeItem ?? null,
@@ -337,6 +337,16 @@ class CategoryFilterBuilder
 			}
 		}
 
+		$exclusiveArguments = $arguments;
+		$exclusiveArguments['demand']['categories'][$this->settings['demandCategoriesKey']]['uids'] = $uid;
+		$exclusiveItem = new CategoryFilterItem(
+			label: $this->getCategoryTitle($category),
+			url: $this->buildUri($exclusiveArguments),
+			fragmentUrl: $this->buildUri($exclusiveArguments, true),
+			active: true,
+			activeChildren: [],
+		);
+
 		if ($newList) {
 			$arguments['demand']['categories'][$this->settings['demandCategoriesKey']]['uids'] = $newList;
 		} else {
@@ -358,6 +368,7 @@ class CategoryFilterBuilder
 			active: $isActive,
 			hasNoPotential: $hasNoPotential ?? false,
 			activeChildren: $activeChildren,
+			exclusiveItem: $exclusiveItem,
 		);
 	}
 
@@ -369,6 +380,9 @@ class CategoryFilterBuilder
 	 */
 	protected function buildUri(array $arguments, bool $isFragmentUri = false): string
 	{
+		if ($isFragmentUri && $this->fragmentUrlBuilder) {
+			return ($this->fragmentUrlBuilder)($arguments);
+		}
 		if ($isFragmentUri && $this->settings['pluginContentRecordUidArgumentKey'] && $this->pluginContentRecordUid) {
 			$arguments[$this->settings['pluginContentRecordUidArgumentKey']] = $this->pluginContentRecordUid;
 		}

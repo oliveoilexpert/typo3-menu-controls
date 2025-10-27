@@ -14,6 +14,9 @@ use UBOS\MenuControls\Dto\MenuDemand;
  */
 trait FindByMenuDemandRepositoryTrait
 {
+	/**
+	 * @return QueryInterface
+	 */
 	abstract public function createQuery();
 
 	/**
@@ -72,7 +75,8 @@ trait FindByMenuDemandRepositoryTrait
 				'or' => $query->logicalOr(...$categoriesConstraints),
 				'and' => $query->logicalAnd(...$categoriesConstraints),
 				'notor' => $query->logicalNot($query->logicalOr(...$categoriesConstraints)),
-				'notand' => $query->logicalNot($query->logicalAnd(...$categoriesConstraints))
+				'notand' => $query->logicalNot($query->logicalAnd(...$categoriesConstraints)),
+				default => $query->logicalAnd(...$categoriesConstraints)
 			};
 		}
 
