@@ -10,7 +10,6 @@
                         <description>Display selected pages</description>
                         <config>
                             <type>group</type>
-                            <internal_type>db</internal_type>
                             <allowed>pages</allowed>
                             <size>10</size>
                             <maxitems>100</maxitems>
@@ -22,7 +21,6 @@
                         <description>Display subpages of selected pages</description>
                         <config>
                             <type>group</type>
-                            <internal_type>db</internal_type>
                             <allowed>pages</allowed>
                             <size>3</size>
                             <maxitems>50</maxitems>

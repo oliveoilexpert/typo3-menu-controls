@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Amdeu\MenuControls\Controller;
 
 use Psr\Http\Message\ResponseInterface;
+use TYPO3\CMS\Core\Cache\CacheTag;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use Amdeu\MenuControls\Builder\CategoryFilterBuilder;
@@ -102,8 +103,8 @@ class MenuController extends ActionController
         array                         $filterConfigs = null,
     ): array {
         $filterConfigs ??= ['main' => $this->getFilterConfig()];
-
-        $demand      = $this->buildDemand(respectActiveCategories: true, categoryGroupKeys: array_keys($filterConfigs));
+		$demand      = $this->buildDemand($filterConfigs);
+        $this->addMenuDemandCacheTags($demand);
         $allRows     = $repository->findByMenuDemand($demand, true);
         $currentPage = (int)($this->request->getArguments()['page'] ?? 1);
         $variables   = [];
@@ -219,21 +220,19 @@ class MenuController extends ActionController
 
     /**
      * Builds a MenuDemand from FlexForm settings.
-     * When $respectActiveCategories is true, active UIDs from the request are
-     * merged for each group key so the repository query is correctly filtered.
+     * Merges active category UIDs from the request for any enabled filter groups
      *
-     * @param array $categoryGroupKeys Group keys to read active UIDs for
+     * @param array $filterConfigs Optional filter configs to determine which category groups to merge active UIDs for
      */
-    protected function buildDemand(
-        bool  $respectActiveCategories = false,
-        array $categoryGroupKeys = ['main'],
-    ): MenuDemand {
-        $settings = $this->settings['demand'] ?? [];
-        if ($respectActiveCategories) {
-            foreach ($categoryGroupKeys as $key) {
-                $settings['categoryGroups'][$key]['uids'] = $this->getActiveCategoryUids($key);
-            }
-        }
+	protected function buildDemand(
+		array $filterConfigs = [],
+	): MenuDemand {
+		$settings = $this->settings['demand'] ?? [];
+		foreach ($filterConfigs as $groupKey => $config) {
+			if ($config['enabled'] ?? false) {
+				$settings['categoryGroups'][$groupKey]['uids'] = $this->getActiveCategoryUids($groupKey);
+			}
+		}
         $settings['additionalSettings']['currentPageId'] = $this->request->getAttribute('routing')->getPageId();
         return MenuDemand::createFromArray($settings);
     }
@@ -310,5 +309,50 @@ class MenuController extends ActionController
     protected function getActiveCategoryUids(string $groupKey = 'main'): string
     {
         return $this->request->getArguments()['demand']['categoryGroups'][$groupKey]['uids'] ?? '';
+    }
+
+    /**
+     * Tags the current page cache with the demand's page-based scope.
+     *
+     * autoTagging (frontend.cache.autoTagging) only tags rows that were actually
+     * fetched, so it cannot know about a page that doesn't exist yet (or is
+     * currently filtered out). Without this, adding/moving/hiding a page under a
+     * configured parent page — or toggling visibility of an explicitly selected
+     * page — would not invalidate this plugin's cache, since the affected page
+     * was never part of a previous result set and thus never received a tag.
+     *
+     * Both cases are covered by tags TYPO3 core already flushes on page changes:
+     *   - editing/creating/deleting/moving a page always flushes 'pageId_<pid>'
+     *     for its containing page (see DataHandler::prepareCacheFlush()), so
+     *     tagging with the configured parent UIDs picks that up.
+     *   - editing a specific page always flushes 'pages_<uid>' for that page,
+     *     regardless of whether it was previously fetched, so tagging with the
+     *     configured record UIDs picks that up too.
+     *
+     * Category-based filtering has no equivalent core mechanism (a page gaining
+     * or losing a category doesn't flush any tag tied to that category), so it
+     * remains a gap not covered here.
+     */
+    protected function addMenuDemandCacheTags(MenuDemand $demand): void
+    {
+        $cacheDataCollector = $this->request->getAttribute('frontend.cache.collector');
+        if (!$cacheDataCollector) {
+            return;
+        }
+
+        $tags = [
+            ...array_map(
+                fn(int $uid) => new CacheTag('pageId_' . $uid),
+                GeneralUtility::intExplode(',', $demand->parents, true)
+            ),
+            ...array_map(
+                fn(int $uid) => new CacheTag('pages_' . $uid),
+                GeneralUtility::intExplode(',', $demand->records, true)
+            ),
+        ];
+
+        if ($tags) {
+            $cacheDataCollector->addCacheTags(...$tags);
+        }
     }
 }

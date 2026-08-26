@@ -36,7 +36,7 @@ class PageRepository extends Repository implements MenuDemandRepositoryInterface
      *
      * Supported additionalSettings keys:
      *   - types: comma-separated doktype values to include (default: all)
-     *   - navHide: when false, excludes pages with nav_hide = 1 (default: true = include all)
+     *   - navHide: when true, excludes pages with nav_hide = 1 (default: true)
      *   - currentPageId: excludes the current page from results when provided
      */
     protected function getAdditionalMenuDemandConstraints(QueryInterface $query, MenuDemand $demand): array
@@ -58,8 +58,8 @@ class PageRepository extends Repository implements MenuDemandRepositoryInterface
             }
         }
 
-        // Exclude nav_hide pages when navHide is explicitly false
-        if (isset($settings['navHide']) && !$settings['navHide']) {
+        // Exclude nav_hide pages when navHide is true
+        if (isset($settings['navHide']) && $settings['navHide']) {
             $constraints[] = $query->equals('nav_hide', 0);
         }
 
